@@ -154,26 +154,30 @@ const msg = function(req, res) {
                                 })
                         }else if(state.last == 'variants'){
                             const variantID = state.variants[msg-1].node.id;
-                            console.log(`saving-in-cart:${variantID}`)
-                            const txt ='Your item is placed in cart. What do you want next?\n1. Continue shopping.\n2. Proceed to payment.'
-                            res.sendStatus(200);
-                            msgCtrl.sendMsg({
-                                fromNumber,
-                                msg: txt
-                            })  
-                            userStates.updateOne({
-                                phone: fromNumber
-                            }, {
-                                $set: {
-                                    last: 'added-to-cart',
-                                    checkoutCreate:response.checkoutCreate
-                                } 
-                            }, function(err, result) {
-                                client.close();
-                                if (err) {
-                                    console.error(err)
-                                }
-                            });
+                            createCheckout(storeMyShopify, accessToken, variantID)
+                                .then(response=>{
+                                    const txt = `Congratulations! Your order is almost created.\nPlease, open this url and finish him!\n${
+                                        response.checkoutCreate.checkout.webUrl
+                                    }\n`;
+                                    res.send(response);
+                                    msgCtrl.sendMsg({
+                                        fromNumber,
+                                        msg: txt
+                                    })
+                                    userStates.updateOne({
+                                        phone: fromNumber
+                                    }, {
+                                        $set: {
+                                            last: 'checkout',
+                                            checkoutCreate:response.checkoutCreate
+                                        }
+                                    }, function(err, result) {
+                                        client.close();
+                                        if (err) {
+                                            console.error(err)
+                                        }
+                                    });
+                                })
                         }
                     }
                 })
