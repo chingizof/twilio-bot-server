@@ -116,6 +116,12 @@ function handleMessage(req, res) {
     ).exec();
   };
 
+  function sendTopBackMenu() {
+    msgCtrl.sendMsg({
+      fromNumber,
+      msg: 'Is there anything else that you want?\n*1. Catalogue*\n*2. Customer Support*\n*3. Order Status*\n*4. Abandoned cart*',
+    });
+  }
   const getOrderStatus = () => {
     msgCtrl.sendMsg({
       fromNumber,
@@ -377,9 +383,10 @@ function handleMessage(req, res) {
       ).exec();
     } else if (state.last === 'added-to-cart') {
       switch (msg) {
-        case '1':
+        case '1': {
           sendCatalog();
           break;
+        }
         case '2':
           {
             const txt = `*Your cart is:*\n${state.storedLineItems
@@ -409,7 +416,10 @@ function handleMessage(req, res) {
           createCheckoutList(
             storeMyShopify,
             accessToken,
-            state.storedLineItems,
+            state.storedLineItems.map((x) => ({
+              variantId: x.variantId,
+              quantity: x.quantity,
+            })),
           )
             .then((createdCheckoutInfo) => {
               const txt = `Congratulations!\nYour order is almost created.\nPlease, open this url and finish him!\n ${
@@ -427,7 +437,10 @@ function handleMessage(req, res) {
                   storedLineItems: [],
                 },
               },
-              errorHandler).exec();
+              errorHandler);
+              setTimeout(() => {
+                sendTopBackMenu();
+              }, 5000);
             });
 
           break; }
