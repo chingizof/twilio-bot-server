@@ -1,27 +1,23 @@
-"use strict";
-const axios = require("axios");
+const axios = require('axios');
 
 async function getAbandonedCart(
   storeMyShopify,
   apiVersion,
   storeAPIkey,
   storePassword,
-  created_at_min
 ) {
-  const url_checkouts = `https://${storeAPIkey}:${storePassword}@${storeMyShopify}/admin/api/${apiVersion}/checkouts.json`;
+  const urlCheckouts = `https://${storeAPIkey}:${storePassword}@${storeMyShopify}/admin/api/${apiVersion}/checkouts.json`;
 
   return axios
-    .get(url_checkouts, {
+    .get(urlCheckouts, {
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     })
-    .then(function (response) {
-      return response;
-    })
-    .catch(function (error) {
+    .then((response) => response)
+    .catch((error) => {
       // handle error
-      console.log("@@@@@@@@@@ERROR at getAbandonedCart:   ", error);
+      console.log('@@@@@@@@@@ERROR at getAbandonedCart:   ', error);
       return false;
     });
 }

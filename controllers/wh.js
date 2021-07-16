@@ -2,15 +2,16 @@ const {
   generateSlug,
 } = require('random-word-slugs');
 const UserStates = require('../db/models/Userstate');
-const discounts = require('../db/models/Userstate');
+const UserDiscount = require('../db/models/UserDiscount');
 const msgCtrl = require('./msg');
 
-const storeAPIkey = '0f6b58da9331414de7ed1d948c67ac35';
-const storePassword = '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';
-const accessToken = '0386d977a264448a1b62c295ac542a0d';
-const storeMyShopify = 'fat-cat-studio.myshopify.com';
+const storeAPIkey = 'a55e9f8e5d6feebd23752396acd80cc4';
+const storePassword = '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';
+const accessToken = '9d75b9d30a16f02bb9517f2aafd9bd48';
+const storeMyShopify = 'banarasi-outfit.myshopify.com';
+const externalUrl = 'banarasioutfit.in';
 const apiVersion = '2021-04';
-const priceRuleId = '950294741183';
+const priceRuleId = '942249935042';
 
 const {
   retireveCollections,
@@ -54,12 +55,12 @@ function handleMessage(req, res) {
     UserStates
       .create({
         phone: fromNumber,
-        last: 'main',
+        last: 'demoMain',
       })
       .then(() => {
         msgCtrl.sendMsg({
           fromNumber,
-          msg: '*Hello! What do you want?*\n1. Catalogue\n2. Customer Support\n3. Order Status',
+          msg: 'Hello! Are your here to receive a discount for Banasari Outfits ?\n1. Yes\n2. No',
         });
       }).catch(errorHandler);
   }
@@ -104,17 +105,23 @@ function handleMessage(req, res) {
       },
       {
         $set: {
-          last: 'tracking',
+          last: 'support',
         },
       },
-    );
+    ).exec();
   };
 
   const getOrderStatus = () => {
     msgCtrl.sendMsg({
       fromNumber,
-      msg: 'Type your tracking number OR email.',
+      msg: 'Type your tracking number OR email.\n(Demo: copy paste below tracking number)',
     });
+    setTimeout(() => {
+      msgCtrl.sendMsg({
+        fromNumber,
+        msg: 'UH037386106US',
+      });
+    }, 3000);
     UserStates.updateOne(
       {
         phone: fromNumber,
@@ -124,7 +131,7 @@ function handleMessage(req, res) {
           last: 'tracking',
         },
       },
-    );
+    ).exec();
   };
 
   function continueDialog(state) {
@@ -382,7 +389,7 @@ function handleMessage(req, res) {
                   storedLineItems: [],
                 },
               },
-              errorHandler);
+              errorHandler).exec();
             });
 
           break; }
@@ -418,7 +425,7 @@ function handleMessage(req, res) {
                   storedLineItems: [],
                 },
               },
-              errorHandler);
+              errorHandler).exec();
             });
 
           break;
@@ -463,12 +470,12 @@ function handleMessage(req, res) {
         },
         {
           $set: {
-            last: 'deleteitem',
+            last: 'deleteItem',
           },
         },
         errorHandler,
-      );
-    } else if (state.last === 'deleteitem') {
+      ).exec();
+    } else if (state.last === 'deleteItem') {
       const newList = this.storedLineItems.filter((t) => t.variantId === msg);
       UserStates.updateOne(
         {
@@ -476,11 +483,70 @@ function handleMessage(req, res) {
         },
         {
           $set: {
-            last: 'deleteitem',
+            last: 'deleteItem',
             storedLineItems: newList,
           },
         },
-      );
+      ).exec();
+    } else if (state.last === 'demoMain') {
+      if (msg === '1') {
+        const discountSlug = generateSlug();
+        shopifyDiscountCreate(
+          storeMyShopify,
+          apiVersion,
+          storeAPIkey,
+          storePassword,
+          priceRuleId,
+          discountSlug,
+        )
+          .then((response) => {
+            const { code } = response.data.discount_code;
+            const discountedUrl = `http://${externalUrl}/discount/${code}`;
+
+            UserDiscount
+              .create({
+                discountCode: discountSlug,
+                phone: fromNumber,
+              })
+              .then(() => {
+                msgCtrl.sendMsg({
+                  fromNumber,
+                  msg: `Here is your promocode(click this link): ${discountedUrl}`,
+                });
+              })
+              .catch((err) => {
+                // eslint-disable-next-line no-console
+                console.log(err);
+                msgCtrl.sendMsg({
+                  fromNumber,
+                  msg: 'error on creating discount',
+                });
+              });
+          })
+          .catch((err) => {
+            // eslint-disable-next-line no-console
+            console.log(err);
+            msgCtrl.sendMsg({
+              fromNumber,
+              msg: 'error on creating discount',
+            });
+          });
+      } else {
+        msgCtrl.sendMsg({
+          fromNumber,
+          msg: 'Hello! What do you want?\n1. Catalogue\n2. Customer Support\n3. Order Status',
+        });
+        UserStates.updateOne(
+          {
+            phone: fromNumber,
+          },
+          {
+            $set: {
+              last: 'main',
+            },
+          },
+        ).exec();
+      }
     } else {
       // eslint-disable-next-line no-constant-condition
       console.log("state.last !== 'main'", state);
@@ -499,17 +565,17 @@ function handleMessage(req, res) {
     )
       .then((response) => {
         const { code } = response.data.discount_code;
-        const discountedUrl = `http://${storeMyShopify}/discount/${code}`;
+        const discountedUrl = `http://${externalUrl}/discount/${code}`;
 
-        discounts
-          .insertOne({
+        UserDiscount
+          .create({
             discountCode: discountSlug,
             phone: fromNumber,
           })
           .then(() => {
             msgCtrl.sendMsg({
               fromNumber,
-              msg: `Here is your promocode: ${discountedUrl}`,
+              msg: `Here is your promocode(click this link): ${discountedUrl}`,
             });
           })
           .catch((err) => {

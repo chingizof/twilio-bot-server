@@ -60,7 +60,7 @@ async function shopifyDiscountCreate(
   };
 
   const sessionUrlDiscount = `https://${storeMyShopify}/admin/api/${apiVersion}/price_rules/${priceRuleId}/discount_codes.json`;
-
+  console.log(sessionUrlDiscount);
   return axios
     .post(sessionUrlDiscount, JSON.stringify(dataDiscount), {
       auth: {
