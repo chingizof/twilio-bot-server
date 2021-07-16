@@ -77,7 +77,7 @@ function handleMessage(req, res) {
       console.log(collections, fromNumber);
       msgCtrl.sendMsg({
         fromNumber,
-        msg: collections,
+        msg: collections
       });
       UserStates.updateOne(
         {
@@ -86,10 +86,10 @@ function handleMessage(req, res) {
         {
           $set: {
             last: 'catalog',
-            catalogs: response.collections.edges,
+            catalogs,
           },
         }, errorHandler,
-      );
+      ).exec();
     }).catch(errorHandler);
   }
 
@@ -236,8 +236,6 @@ function handleMessage(req, res) {
               phone: fromNumber,
             },
             {
-              last: 'products',
-              products,
               $set: {
                 last: 'products',
                 products,
@@ -359,7 +357,7 @@ function handleMessage(req, res) {
                 },
               },
               errorHandler,
-            );
+            ).exec();
           }
           break;
         case '3': {
