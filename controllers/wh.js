@@ -343,13 +343,12 @@ function handleMessage(req, res) {
           break;
         case '2':
           {
-            const storedLineItemsText = state.storedLineItems
+            const txt = `*Your cart is:*\n${state.storedLineItems
               .filter((x) => x.title && x.quantity)
               .map(
                 ({ title, quantity }, idx) => `${idx + 1}. ${title} - ${quantity}`,
               )
-              .join('\n');
-            const txt = `*Your cart is:*\n${storedLineItemsText}\n\n*What do you want to do next?*\n1. Continue Shopping \n2. Proceed to payment \n3. Delete item`;
+              .join('\n')}\n\n*What do you want to do next?*\n1. Continue Shopping \n2. Proceed to payment \n3. Delete item`;
             msgCtrl.sendMsg({
               fromNumber,
               msg: txt,
