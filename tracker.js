@@ -1,4 +1,17 @@
-const { getConnect } = require('./db/mongo');
+/* eslint-disable no-console */
+const mongoose = require('mongoose');
+
+// Set up default mongoose connection
+const mongoDB = 'mongodb+srv://nurlan:qweQWE123@cluster0.ikiuf.mongodb.net/test?retryWrites=true&w=majority';
+mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
+
+// Get the default connection
+const db = mongoose.connection;
+
+// Bind connection to error event (to get notification of connection errors)
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+
+const UserDiscount = require('./db/models/UserDiscount');
 const msgCtrl = require('./controllers/msg');
 const {
   getAbandonedCart,
@@ -21,40 +34,33 @@ setInterval(() => {
       if (!response) {
         return;
       }
+
       const allCarts = response.data.checkouts;
       if (!allCarts || !allCarts.length) {
         console.log('abandoned carts not found');
         return;
       }
-
-      const client = getConnect();
-      client.connect((connecionError) => {
-        if (connecionError) {
-          console.log(connecionError);
+      console.log(allCarts.map((x) => ({ discount_codes: x.discount_codes[0].code })));
+      UserDiscount.find((err, pairs) => {
+        if (!pairs || !pairs.length) {
+          console.log('phone:discount pairs not found');
           return;
         }
-        const db = client.db('test');
-        const discounts = db.collection('discounts');
-        discounts.find({}).then((pairs) => {
-          if (!pairs || !pairs.length) {
-            console.log('phone:discount pairs not found');
+        allCarts.forEach((cart) => {
+          for (let i = 0; i < cart.discount_codes.length; i += 1) {
+            const { code } = cart.discount_codes[i];
+            const findedPair = pairs.find((p) => p.discountCode === code);
+            if (!findedPair) return;
+            console.log(`found pairs: ${findedPair.phone}: ${findedPair.discountCode}`);
+            msgCtrl.sendMsg({
+              fromNumber: findedPair.phone,
+              msg: `Hi! Come back & finish your purchase! Here's the link:\n${cart.abandoned_checkout_url}`,
+            });
             return;
           }
-          allCarts.forEach((cart) => {
-            for (let i = 0; i < cart.discount_codes.length; i += 1) {
-              const code = cart.discount_codes[i];
-              const findedPair = pairs.find((p) => p.discountCode === code);
-              if (!findedPair) return;
-              msgCtrl.sendMsg({
-                fromNumber: findedPair.phone,
-                msg: `Please, complete your purchase!\n${cart.abandoned_checkout_url}`,
-              });
-              return;
-            }
-          });
-        }).catch((err) => {
-          console.log(err);
         });
+        // eslint-disable-next-line consistent-return
+        return pairs;
       });
     });
 }, 3000);

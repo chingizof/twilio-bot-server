@@ -9,6 +9,7 @@ const userDiscountSchema = new Schema({
   phone: { type: String, required: true },
   discountCode: { type: String, required: true },
 }, {
+  collection: 'userDiscount',
   timestamps: true,
 });
 

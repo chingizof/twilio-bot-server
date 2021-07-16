@@ -374,7 +374,7 @@ function handleMessage(req, res) {
             state.storedLineItems,
           )
             .then((createdCheckoutInfo) => {
-              const txt = `Congratulations! \nYour order is almost created.\nPlease, open this url and finish him!\n ${
+              const txt = `Congratulations!\nYour order is almost created.\nPlease, open this url and finish him!\n ${
                 createdCheckoutInfo.checkoutCreate.checkout.webUrl}`;
               msgCtrl.sendMsg({
                 fromNumber,
@@ -447,7 +447,7 @@ function handleMessage(req, res) {
         default: {
           msgCtrl.sendMsg({
             fromNumber,
-            msg: 'Please,send right command',
+            msg: 'Please, send right command',
           });
           break;
         }
